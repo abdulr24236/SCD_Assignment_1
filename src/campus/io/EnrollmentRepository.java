@@ -26,12 +26,23 @@ public class EnrollmentRepository {
     private static final String FILE_NAME = "enrollments.txt";
 
     public static void save(Enrollment enrollment) {
+        if (enrollment.getSection() == null || enrollment.getStudent() == null) {
+            // Defensive guard — should never happen for a freshly created
+            // enrollment, but never silently corrupt the file if it does.
+            return;
+        }
         FileManager.appendLine(FILE_NAME, toLine(enrollment));
     }
 
     public static void saveAll(List<Enrollment> enrollments) {
         List<String> lines = new ArrayList<>();
         for (Enrollment enrollment : enrollments) {
+            if (enrollment.getSection() == null || enrollment.getStudent() == null) {
+                // Skip rather than crash — a corrupted enrollment (e.g. one
+                // whose section no longer exists) shouldn't take down every
+                // save action in the app.
+                continue;
+            }
             lines.add(toLine(enrollment));
         }
         FileManager.writeLines(FILE_NAME, lines);
@@ -41,7 +52,10 @@ public class EnrollmentRepository {
                                            List<TeachingAssistant> teachingAssistants) {
         List<Enrollment> enrollments = new ArrayList<>();
         for (String line : FileManager.readLines(FILE_NAME)) {
-            enrollments.add(fromLine(line, sections, normalStudents, teachingAssistants));
+            Enrollment enrollment = fromLine(line, sections, normalStudents, teachingAssistants);
+            if (enrollment != null) {
+                enrollments.add(enrollment);
+            }
         }
         return enrollments;
     }
@@ -52,6 +66,13 @@ public class EnrollmentRepository {
                 + FileManager.DELIMITER + enrollment.getStatus();
     }
 
+    /**
+     * Returns null (instead of an Enrollment with a null section) if the
+     * referenced section can't be found — this is the actual root-cause fix:
+     * a null-section Enrollment used to get loaded anyway and would crash
+     * every future save() call. Discarding it here is a lost line of
+     * history, but better than corrupting every save from this point on.
+     */
     private static Enrollment fromLine(String line, List<Section> sections, List<NormalStudent> normalStudents,
                                        List<TeachingAssistant> teachingAssistants) {
         String[] f = line.split(FileManager.DELIMITER, -1);
@@ -64,15 +85,15 @@ public class EnrollmentRepository {
         Student student = PersonLookup.findStudent(studentTag, normalStudents, teachingAssistants);
         Section section = findSectionById(sections, sectionId);
 
+        if (section == null || student == null) {
+            return null;
+        }
+
         Enrollment enrollment = new Enrollment(enrollmentId, student, section, enrollmentDate);
         enrollment.setStatus(status);
 
-        if (section != null) {
-            section.registerLoadedEnrollment(enrollment);
-        }
-        if (student != null) {
-            student.addEnrollment(enrollment);
-        }
+        section.registerLoadedEnrollment(enrollment);
+        student.addEnrollment(enrollment);
 
         return enrollment;
     }

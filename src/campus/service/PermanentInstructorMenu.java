@@ -219,6 +219,10 @@ public class PermanentInstructorMenu {
         if (student == null) {
             return;
         }
+        if (!section.getEnrolledStudents().contains(student)) {
+            System.out.println((student) + " is not enrolled in " + section.getSectionId() + ".");
+            return;
+        }
 
         double percentage = instructor.calculateAttendancePercentage(student, section);
         System.out.println("  Student        : " + student.getName() + " (" + student.getStudentId() + ")");
