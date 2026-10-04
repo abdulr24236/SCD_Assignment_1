@@ -126,6 +126,10 @@ public class VisitingInstructorMenu {
         if (student == null) {
             return;
         }
+        if (!section.getEnrolledStudents().contains(student)) {
+            System.out.println((student) + " is not enrolled in " + section.getSectionId() + ".");
+            return;
+        }
         AttendanceStatus status = promptForStatus();
         if (status == null) {
             return;
@@ -153,6 +157,7 @@ public class VisitingInstructorMenu {
             UIHelper.warning("You are not assigned to instruct section " + section.getSectionId() + ".");
             return;
         }
+
         Student student = promptForStudent();
         if (student == null) {
             return;
@@ -182,6 +187,10 @@ public class VisitingInstructorMenu {
         }
         Student student = promptForStudent();
         if (student == null) {
+            return;
+        }
+        if (!section.getEnrolledStudents().contains(student)) {
+            System.out.println((student) + " is not enrolled in " + section.getSectionId() + ".");
             return;
         }
 

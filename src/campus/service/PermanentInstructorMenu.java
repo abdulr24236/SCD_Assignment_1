@@ -153,6 +153,14 @@ public class PermanentInstructorMenu {
         if (student == null) {
             return;
         }
+        if (!section.getEnrolledStudents().contains(student)) {
+            System.out.println(studentIdOf(student) + " is not enrolled in " + section.getSectionId() + ".");
+            return;
+        }
+        if (!section.getEnrolledStudents().contains(student)) {
+            System.out.println(studentIdOf(student) + " is not enrolled in " + section.getSectionId() + ".");
+            return;
+        }
         AttendanceStatus status = promptForStatus();
         if (status == null) {
             return;
